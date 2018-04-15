@@ -9,7 +9,6 @@
 
 # In[1]:
 
-
 """
 DON'T MODIFY ANYTHING IN THIS CELL
 """
@@ -25,7 +24,6 @@ text = text[81:]
 # 使用 `view_sentence_range` 来查看数据的不同部分。
 
 # In[2]:
-
 
 view_sentence_range = (0, 10)
 
@@ -68,7 +66,6 @@ print('\n'.join(text.split('\n')[view_sentence_range[0]:view_sentence_range[1]])
 
 # In[3]:
 
-
 import numpy as np
 import problem_unittests as tests
 from collections import Counter
@@ -103,7 +100,6 @@ tests.test_create_lookup_tables(create_lookup_tables)
 
 # In[69]:
 
-
 int_to_vocab
 
 
@@ -126,7 +122,6 @@ int_to_vocab
 # 这个字典将用于标记符号并在其周围添加分隔符（空格）。这能将符号视作单独词汇分割开来，并使神经网络更轻松地预测下一个词汇。请确保你并没有使用容易与词汇混淆的标记。与其使用 “dash” 这样的标记，试试使用“||dash||”。
 
 # In[4]:
-
 
 def token_lookup():
     """
@@ -151,7 +146,6 @@ tests.test_tokenize(token_lookup)
 
 # In[5]:
 
-
 """
 DON'T MODIFY ANYTHING IN THIS CELL
 """
@@ -163,7 +157,6 @@ helper.preprocess_and_save_data(data_dir, token_lookup, create_lookup_tables)
 # 这是你遇到的第一个检点。如果你想要回到这个 notebook，或需要重新打开 notebook，你都可以从这里开始。预处理的数据都已经保存完毕。
 
 # In[2]:
-
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
@@ -188,7 +181,6 @@ int_text, vocab_to_int, int_to_vocab, token_dict = helper.load_preprocess()
 # ### 检查 TensorFlow 版本并访问 GPU
 
 # In[1]:
-
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
@@ -219,7 +211,6 @@ else:
 # 返回下列元组中的占位符 `(Input, Targets, LearningRate)`
 
 # In[118]:
-
 
 def get_inputs():
     """
@@ -253,7 +244,6 @@ tests.test_get_inputs(get_inputs)
 
 # In[4]:
 
-
 def get_init_cell(batch_size, rnn_size):
     """
     Create an RNN Cell and initialize it.
@@ -281,7 +271,6 @@ tests.test_get_init_cell(get_init_cell)
 # 返回嵌入序列。
 
 # In[5]:
-
 
 def get_embed(input_data, vocab_size, embed_dim):
     """
@@ -316,7 +305,6 @@ tests.test_get_embed(get_embed)
 
 # In[6]:
 
-
 def build_rnn(cell, inputs):
     """
     Create a RNN using a RNN Cell
@@ -346,7 +334,6 @@ tests.test_build_rnn(build_rnn)
 # 返回下列元组中的 logit 和最终状态 `Logits, FinalState`
 
 # In[7]:
-
 
 def build_nn(cell, rnn_size, input_data, vocab_size, embed_dim):
     """
@@ -385,7 +372,6 @@ tests.test_build_nn(build_nn)
 
 # In[39]:
 
-
 [
   # First Batch
   [
@@ -407,12 +393,10 @@ tests.test_build_nn(build_nn)
 
 # In[43]:
 
-
 len(int_text)
 
 
 # In[17]:
-
 
 def get_batches(int_text, batch_size, seq_length):
     """
@@ -456,7 +440,6 @@ tests.test_get_batches(get_batches)
 
 # In[115]:
 
-
 # Number of Epochs
 num_epochs = 200
 # Batch Size
@@ -482,7 +465,6 @@ save_dir = './save'
 # 使用你实现的神经网络创建图表。
 
 # In[116]:
-
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
@@ -519,7 +501,6 @@ with train_graph.as_default():
 # 在预处理数据中训练神经网络。如果你遇到困难，请查看这个[表格](https://discussions.udacity.com/)，看看是否有人遇到了和你一样的问题。
 
 # In[117]:
-
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
@@ -559,7 +540,6 @@ with tf.Session(graph=train_graph) as sess:
 
 # In[30]:
 
-
 """
 DON'T MODIFY ANYTHING IN THIS CELL
 """
@@ -569,8 +549,7 @@ helper.save_params((seq_length, save_dir))
 
 # # 检查点
 
-# In[31]:
-
+# In[1]:
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
@@ -595,8 +574,7 @@ seq_length, load_dir = helper.load_params()
 # 
 # 返回下列元组中的 tensor `(InputTensor, InitialStateTensor, FinalStateTensor, ProbsTensor)`
 
-# In[112]:
-
+# In[2]:
 
 def get_tensors(loaded_graph):
     """
@@ -622,8 +600,7 @@ tests.test_get_tensors(get_tensors)
 # ### 选择词汇
 # 实现 `pick_word()` 函数来使用 `probabilities` 选择下一个词汇。
 
-# In[113]:
-
+# In[5]:
 
 def pick_word(probabilities, int_to_vocab):
     """
@@ -633,11 +610,12 @@ def pick_word(probabilities, int_to_vocab):
     :return: String of the predicted word
     """
     # TODO: Implement Function
-    import heapq,random
-    idx = [idx for idx, prob in heapq.nlargest(5,enumerate(probabilities))]
-    pos_idx = idx[random.randint(0,4)]
-    word = int_to_vocab[pos_idx]
-    return word
+    # 错误代码 
+#     import heapq,random
+#     idx = [idx for idx, prob in heapq.nlargest(5,enumerate(probabilities))]
+#     pos_idx = idx[random.randint(0,4)]
+#     word = int_to_vocab[pos_idx]
+    return np.random.choice(list(int_to_vocab.values()),1,p=probabilities)[0]
     # 这里的思路是选几个个概率最大的位置出来，然后随机选择一个位置去找相应的词是什么
 
     
@@ -650,8 +628,7 @@ tests.test_pick_word(pick_word)
 # ## 生成电视剧剧本
 # 这将为你生成一个电视剧剧本。通过设置 `gen_length` 来调整你想生成的剧本长度。
 
-# In[119]:
-
+# In[6]:
 
 gen_length = 200
 # homer_simpson, moe_szyslak, or Barney_Gumble
@@ -703,3 +680,13 @@ with tf.Session(graph=loaded_graph) as sess:
 # 如果这个电视剧剧本毫无意义，那也没有关系。我们的训练文本不到一兆字节。为了获得更好的结果，你需要使用更小的词汇范围或是更多数据。幸运的是，我们的确拥有更多数据！在本项目开始之初我们也曾提过，这是[另一个数据集](https://www.kaggle.com/wcukierski/the-simpsons-by-the-data)的子集。我们并没有让你基于所有数据进行训练，因为这将耗费大量时间。然而，你可以随意使用这些数据训练你的神经网络。当然，是在完成本项目之后。
 # # 提交项目
 # 在提交项目时，请确保你在保存 notebook 前运行了所有的单元格代码。请将 notebook 文件保存为 "dlnd_tv_script_generation.ipynb"，并将它作为 HTML 文件保存在 "File" -> "Download as" 中。请将 "helper.py" 和 "problem_unittests.py" 文件一并提交。
+
+# In[ ]:
+
+
+
+
+# In[ ]:
+
+
+
