@@ -14,6 +14,7 @@
 
 # In[1]:
 
+
 data_dir = './data'
 
 # FloydHub - Use with data ID "R5KrjnANiKVhLWAkpXhNBe"
@@ -35,12 +36,13 @@ helper.download_extract('celeba', data_dir)
 
 # In[2]:
 
+
 show_n_images = 25
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
 """
-get_ipython().magic('matplotlib inline')
+get_ipython().run_line_magic('matplotlib', 'inline')
 import os
 from glob import glob
 from matplotlib import pyplot
@@ -53,6 +55,7 @@ pyplot.imshow(helper.images_square_grid(mnist_images, 'L'), cmap='gray')
 # [CelebFaces Attributes Dataset (CelebA)](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html) 是一个包含 20 多万张名人图片及相关图片说明的数据集。你将用此数据集生成人脸，不会用不到相关说明。你可以更改 `show_n_images` 探索此数据集。
 
 # In[3]:
+
 
 show_n_images = 25
 
@@ -84,6 +87,7 @@ pyplot.imshow(helper.images_square_grid(mnist_images, 'RGB'))
 
 # In[4]:
 
+
 """
 DON'T MODIFY ANYTHING IN THIS CELL
 """
@@ -111,7 +115,8 @@ else:
 # 返回占位符元组的形状为 (tensor of real input images, tensor of z data, learning rate)。
 # 
 
-# In[111]:
+# In[5]:
+
 
 import problem_unittests as tests
 
@@ -129,8 +134,8 @@ def model_inputs(image_width, image_height, image_channels, z_dim):
                            (None, image_width, image_height, image_channels), name='input_real')
 # tf.placeholder 的 shape位置空哪个位置说明哪个位置不确定
     input_z = tf.placeholder(tf.float32, (None, z_dim), name='input_z')
-    lr = tf.placeholder(tf.float32, name='learningrate')
-    output = (input_real, input_z, lr)
+    learning_rate = tf.placeholder(tf.float32, name='learning_rate',shape=())
+    output = (input_real, input_z, learning_rate)
     return output
 
 
@@ -145,12 +150,14 @@ tests.test_model_inputs(model_inputs)
 # 
 # 该函数应返回形如 (tensor output of the discriminator, tensor logits of the discriminator) 的元组。
 
-# In[52]:
+# In[6]:
+
 
 alpha = 0.1
 
 
-# In[13]:
+# In[7]:
+
 
 def discriminator(images, reuse=False):
     """
@@ -167,7 +174,7 @@ def discriminator(images, reuse=False):
         
         x2 = tf.layers.conv2d(relu1, 128, 5, strides=2, padding='same')
         bn2 = tf.layers.batch_normalization(x2, training=True)
-        relu2 = tf.maximum(alpha * x2, x2)
+        relu2 = tf.maximum(alpha * bn2, bn2)
             
         x3 = tf.layers.conv2d(relu2, 256, 5 ,strides=2, padding='same')
         bn3 = tf.layers.batch_normalization(x3, training=True)
@@ -178,7 +185,7 @@ def discriminator(images, reuse=False):
         out = tf.sigmoid(logits)  
     
         output = (out, logits)
-        return output
+    return output
 
 
 """
@@ -193,7 +200,8 @@ tests.test_discriminator(discriminator, tf)
 # 
 # 该函数应返回所生成的 28 x 28 x `out_channel_dim` 维度图像。
 
-# In[48]:
+# In[44]:
+
 
 def generator(z, out_channel_dim, is_train=True):
     """
@@ -204,30 +212,33 @@ def generator(z, out_channel_dim, is_train=True):
     :return: The tensor output of the generator
     """
     # TODO: Implement Function
-    with tf.variable_scope('generator', reuse= is_train is False):
+    with tf.variable_scope('generator', reuse= not is_train):
         # First fully connected layer
         x1 = tf.layers.dense(z, 4*4*512)
         
         x1 = tf.reshape(x1, (-1, 4, 4, 512))
         x1 = tf.layers.batch_normalization(x1, training=is_train)
         x1 = tf.maximum(alpha * x1, x1)
+        # 4*4*512
         
         x2 = tf.layers.conv2d_transpose(x1, 256, 5, strides=2, padding='same')
         x2 = tf.layers.batch_normalization(x2,training=is_train)
         x2 = tf.maximum(alpha * x2, x2)
+        # 8*8*256
         
         x3 = tf.layers.conv2d_transpose(x2, 128, 5, strides =2, padding='same')
         x3 = tf.layers.batch_normalization(x3, training=is_train)
         x3 = tf.maximum(alpha * x3, x3)
+        # 16*16*128
         # Output layer, 28x28x3
+ 
+        logits = tf.layers.conv2d_transpose(x3, out_channel_dim, 5, strides=2, padding='same')
+        logits = tf.layers.batch_normalization(logits, training=is_train)
         
-        x4 = tf.layers.conv2d(x3, 64,3, strides = 1, padding='valid')
-        x4 = tf.layers.batch_normalization(x4, training=is_train)
-        x4 = tf.maximum(alpha * x4, x4)
+        #out_logits = tf.image.resize_images(logits,[28,28],align_corners=False)
+        out_logits = tf.layers.conv2d(logits, filters=out_channel_dim, kernel_size=(5,5), strides=(1,1), padding='valid')
         
-        logits = tf.layers.conv2d_transpose(x4, out_channel_dim, 5, strides=2, padding='same')
-        
-        out = tf.tanh(logits)
+        out = tf.tanh(out_logits)
         return out
 
 
@@ -244,7 +255,8 @@ tests.test_generator(generator, tf)
 # - `discriminator(images, reuse=False)`
 # - `generator(z, out_channel_dim, is_train=True)`
 
-# In[66]:
+# In[45]:
+
 
 def model_loss(input_real, input_z, out_channel_dim):
     """
@@ -280,7 +292,8 @@ tests.test_model_loss(model_loss)
 # ### 优化（Optimization）
 # 部署 `model_opt` 函数实现对 GANs 的优化。使用 [`tf.trainable_variables`](https://www.tensorflow.org/api_docs/python/tf/trainable_variables) 获取可训练的所有变量。通过变量空间名 `discriminator` 和 `generator` 来过滤变量。该函数应返回形如 (discriminator training operation, generator training operation) 的元组。
 
-# In[68]:
+# In[46]:
+
 
 def model_opt(d_loss, g_loss, learning_rate, beta1):
     """
@@ -314,7 +327,8 @@ tests.test_model_opt(model_opt, tf)
 # ### 输出显示
 # 使用该函数可以显示生成器 (Generator) 在训练过程中的当前输出，这会帮你评估 GANs 模型的训练程度。
 
-# In[69]:
+# In[47]:
+
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL
@@ -353,7 +367,8 @@ def show_generator_output(sess, n_images, input_z, out_channel_dim, image_mode):
 # 
 # **注意**：在每个批次 (batch) 中运行 `show_generator_output` 函数会显著增加训练时间与该 notebook 的体积。推荐每 100 批次输出一次 `generator` 的输出。 
 
-# In[120]:
+# In[48]:
+
 
 import pickle as pkl
 def train(epoch_count, batch_size, z_dim, learning_rate, beta1, get_batches, data_shape, data_image_mode):
@@ -369,16 +384,16 @@ def train(epoch_count, batch_size, z_dim, learning_rate, beta1, get_batches, dat
     :param data_image_mode: The image mode to use for images ("RGB" or "L")
     """
     # TODO: Build Model
-    #saver = tf.train.Saver(var_list = g_vars)
-    sample_z = np.random.uniform(-1, 1, size=(batch_size, z_dim))
+    # saver = tf.train.Saver()
+    # sample_z = np.random.uniform(-1, 1, size=(batch_size, z_dim))
     # np.random.uniform(low,high,size)
     #  low: 采样下界，float类型，默认值为0；
     # high: 采样上界，float类型，默认值为1；
     # size: 输出样本数目，为int或元组(tuple)类型，例如，size=(m,n,k), 则输出m*n*k个样本，缺省时输出1个值。
-    samples, losses = [], []
+    losses = []
     steps = 0
     
-    out_channel_dim = 1 if data_image_mode =='L' else 3
+    out_channel_dim = data_shape[3]
     input_real, input_z, lr = model_inputs(data_shape[1], data_shape[2],out_channel_dim ,z_dim)
     d_loss, g_loss = model_loss(input_real, input_z, out_channel_dim)
     d_train_opt, g_train_opt = model_opt(d_loss, g_loss, learning_rate, beta1)
@@ -389,59 +404,60 @@ def train(epoch_count, batch_size, z_dim, learning_rate, beta1, get_batches, dat
             for batch_images in get_batches(batch_size):
                 # TODO: Train Model
                 steps += 1
-                
+                batch_images = batch_images * 2
                 #为生成器生成随机噪声
                 batch_z = np.random.uniform(-1, 1, size=(batch_size, z_dim))
                 
                 # 运行优器器
-                _ = sess.run(d_train_opt, feed_dict={input_real: batch_images, input_z: batch_z})
-                _ = sess.run(g_train_opt, feed_dict={input_z: batch_z})
                 
+                _ = sess.run(d_train_opt, feed_dict={input_real: batch_images, input_z: batch_z, lr:learning_rate})
+                _ = sess.run(g_train_opt, feed_dict={input_real: batch_images, input_z: batch_z, lr:learning_rate})
                 
-                if steps % print_evey == 0:
-                    train_loss_d = d_loss.eval({inpus_z: batch_z, input_real: batch_images})
+                # feed_dict ：左侧是前面定义的占位符 右边是真实数据
+                
+                if steps % print_every == 0:
+                    train_loss_d = d_loss.eval({input_z: batch_z, input_real: batch_images})
                     train_loss_g = g_loss.eval({input_z: batch_z})
-
+                    
+                
                     print("Epoch {}/{}...".format(epoch_i+1, epochs),
                           "Discriminator Loss: {:.4f}...".format(train_loss_d),
                           "Generator Loss: {:.4f}".format(train_loss_g))
-        
+                if steps % (print_every*10) == 0:   
+                    show_generator_output(sess, 9, input_z, out_channel_dim, data_image_mode)
+                    
         # 保存模型
         losses.append((train_loss_d, train_loss_g))
 
-        sample_z = np.random.uniform(-1, 1, size=(16, z_dim))
-        gen_samples = sess.run(
-                       generator(input_z, input_size, reuse=True),
-                       feed_dict={input_z: sample_z})
-        samples.append(gen_samples)
-        # saver.save(sess, './checkpoints/generator.ckpt')
+        #sample_z = np.random.uniform(-1, 1, size=(16, z_dim))
+        #gen_samples = sess.run(
+        #               generator(input_z, out_channel_dim, is_train=True),
+        #               feed_dict={input_z: sample_z})
+        #samples.append(gen_samples)
+        # tf.train.Saver().save(sess, './checkpoints/generator.ckpt')
         
     # Save training generator samples
-    with open('train_samples.pkl', 'wb') as f:
-        pkl.dump(samples, f)
-    return losses, samples
+  # with open('train_samples.pkl', 'wb') as f:
+  #      pkl.dump(samples, f)
+    return losses
 
 
 # ### MNIST
 # 在 MNIST 上测试你的 GANs 模型。经过 2 次迭代，GANs 应该能够生成类似手写数字的图像。确保生成器 (generator) 低于辨别器 (discriminator) 的损失，或接近 0。
 
-# In[121]:
-
-mnist_dataset.shape
+# In[49]:
 
 
-# In[122]:
-
-batch_size = 128
+batch_size = 64
 z_dim = 100
-learning_rate = 0.002
-beta1 = 0.9
-
+learning_rate = 0.0002
+beta1 = 0.5
+print_every = 50
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
 """
-epochs = 20
+epochs = 2
 
 mnist_dataset = helper.Dataset('mnist', glob(os.path.join(data_dir, 'mnist/*.jpg')))
 with tf.Graph().as_default():
@@ -452,18 +468,19 @@ with tf.Graph().as_default():
 # ### CelebA
 # 在 CelebA 上运行你的 GANs 模型。在一般的GPU上运行每次迭代大约需要 20 分钟。你可以运行整个迭代，或者当 GANs 开始产生真实人脸图像时停止它。
 
-# In[ ]:
+# In[50]:
 
-batch_size = 128
+
+batch_size = 16
 z_dim = 100
-learning_rate = 0.002
+learning_rate = 0.0002
 beta1 = 0.9
-
+print_every = 50
 
 """
 DON'T MODIFY ANYTHING IN THIS CELL THAT IS BELOW THIS LINE
 """
-epochs = 10
+epochs = 2
 
 celeba_dataset = helper.Dataset('celeba', glob(os.path.join(data_dir, 'img_align_celeba/*.jpg')))
 with tf.Graph().as_default():
